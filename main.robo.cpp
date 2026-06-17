@@ -36,3 +36,75 @@
 // Deixamos o canal 0 para a esquerda e o canal 1 para a direita.
 #define CANAL_PWM_ESQ 0
 #define CANAL_PWM_DIR 1
+//parte 3
+// ==========================================
+// ZONA 3: AS FUNÇÕES DE MOVIMENTO (OS MÚSCULOS)
+// ==========================================
+
+// Função para parar totalmente o robô (Freio)
+void parar_motores() {
+  // 1. Tira o pé do acelerador (Velocidade zero)
+  ledcWrite(CANAL_PWM_ESQ, 0);
+  ledcWrite(CANAL_PWM_DIR, 0);
+
+  // 2. Corta a energia da direção da roda esquerda (LOW = Desligado)
+  digitalWrite(PINO_ESQ_FRENTE, LOW);
+  digitalWrite(PINO_ESQ_TRAS, LOW);
+
+  // 3. Corta a energia da direção da roda direita (LOW = Desligado)
+  digitalWrite(PINO_DIR_FRENTE, LOW);
+  digitalWrite(PINO_DIR_TRAS, LOW);
+}
+// Função para o robô andar para frente com velocidade controlada
+// A "velocidade" deve ser um número entre 0 e 255
+void andar_frente(int velocidade) {
+  // 1. Configura as rodas esquerdas para girar para frente
+  digitalWrite(PINO_ESQ_FRENTE, HIGH);
+  digitalWrite(PINO_ESQ_TRAS, LOW);
+
+  // 2. Configura as rodas direitas para girar para frente
+  digitalWrite(PINO_DIR_FRENTE, HIGH);
+  digitalWrite(PINO_DIR_TRAS, LOW);
+
+  // 3. Aplica a potência do motor (aciona o PWM)
+  ledcWrite(CANAL_PWM_ESQ, velocidade);
+  ledcWrite(CANAL_PWM_DIR, velocidade);
+}
+// Função para o robô dar ré
+void andar_tras(int velocidade) {
+  // Inverte a polaridade: Pinos de trás ligados, pinos da frente desligados
+  digitalWrite(PINO_ESQ_FRENTE, LOW);
+  digitalWrite(PINO_ESQ_TRAS, HIGH);
+  
+  digitalWrite(PINO_DIR_FRENTE, LOW);
+  digitalWrite(PINO_DIR_TRAS, HIGH);
+
+  ledcWrite(CANAL_PWM_ESQ, velocidade);
+  ledcWrite(CANAL_PWM_DIR, velocidade);
+}
+
+// Função para virar à esquerda (Giro no próprio eixo)
+void girar_esquerda(int velocidade) {
+  // Roda esquerda vai para trás, roda direita vai para frente
+  digitalWrite(PINO_ESQ_FRENTE, LOW);
+  digitalWrite(PINO_ESQ_TRAS, HIGH);
+  
+  digitalWrite(PINO_DIR_FRENTE, HIGH);
+  digitalWrite(PINO_DIR_TRAS, LOW);
+
+  ledcWrite(CANAL_PWM_ESQ, velocidade);
+  ledcWrite(CANAL_PWM_DIR, velocidade);
+}
+
+// Função para virar à direita (Giro no próprio eixo)
+void girar_direita(int velocidade) {
+  // Roda esquerda vai para frente, roda direita vai para trás
+  digitalWrite(PINO_ESQ_FRENTE, HIGH);
+  digitalWrite(PINO_ESQ_TRAS, LOW);
+  
+  digitalWrite(PINO_DIR_FRENTE, LOW);
+  digitalWrite(PINO_DIR_TRAS, HIGH);
+
+  ledcWrite(CANAL_PWM_ESQ, velocidade);
+  ledcWrite(CANAL_PWM_DIR, velocidade);
+}
