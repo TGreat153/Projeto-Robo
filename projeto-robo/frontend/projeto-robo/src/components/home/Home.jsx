@@ -4,7 +4,7 @@ function Home() {
         <h1>Olá, escolha a opção desejada:</h1>
         <div className="buttons">
             <a href="/manual" type="button" className="btn btn-dark">Manual</a>
-            <a href="" className="/" type="button" className="btn btn-dark">Auto</a>
+            <a href="/auto" type="button" className="btn btn-dark">Auto</a>
         </div>
     </div>
   )

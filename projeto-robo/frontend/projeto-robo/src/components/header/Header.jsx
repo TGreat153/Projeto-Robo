@@ -8,8 +8,8 @@ function Header() {
         <nav id='navbar'>
           <a href='/'>Inicio</a>
           <a href='/manual'>Manual</a>
-          <a href=''>Auto</a>
-          <a href=''>Sobre</a>
+          <a href='/auto'>Auto</a>
+          <a href='/about'>Sobre</a>
         </nav>
     </div>
   )
