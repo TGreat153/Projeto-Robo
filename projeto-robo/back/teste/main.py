@@ -1,20 +1,4 @@
-import cv2 as cv
-import numpy as np
-
-# Carregar video
-video = cv.VideoCapture('video.mp4')
-while True:
-    # Ler frame do video
-    ret, frame = video.read()
-    if not ret:
-        break
-    # Sair com a tecla 'q'
-    if cv.waitKey(1) & 0xFF == ord('q'):
-        break
-
-def ler_video(url, cor, comando):
-    video = cv.VideoCapture(url)
-    while True:
+True:
         # Ver vídeo
         if str(comando).strip().lower() == "exit":
             break
@@ -46,3 +30,39 @@ def andar(pos):
     # Cor na esquerda
     # Cor na frente
     pass
+
+#função manual(comando, url):
+# if comando == "iniciar":
+#   while comando != "parar":
+#       função andar(comando, url):
+# Else:
+#   Mostrar aviso("Inicie o robo")
+
+
+#função andar(comando, url):
+# if frente
+#   return "frente"
+# if esquerda
+#   return "esquerda"
+# if direita
+#   return "direita"
+# if trás
+#   return "trás"
+# else:
+#   return "Nada"
+
+#Mapeamento de teclas:
+# ↑ Para frente e acelerar
+# ← Para esquerda
+# → Para direita
+# ↓ Para trás e desacelerar
+
+
+#função auto(cor, url):
+# if cor != "vazio":
+#   dado_cor = função ver_cor(cor);
+#   while comando != "parar":
+#       video = centralizar_cor(dado_cor, url);
+#       mover(video, url)
+# Else:
+#   Mostrar aviso("Inicie o robo")
