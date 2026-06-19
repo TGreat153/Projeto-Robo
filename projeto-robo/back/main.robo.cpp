@@ -36,9 +36,9 @@
 // Deixamos o canal 0 para a esquerda e o canal 1 para a direita.
 #define CANAL_PWM_ESQ 0
 #define CANAL_PWM_DIR 1
-//parte 3
+
 // ==========================================
-// ZONA 3: AS FUNÇÕES DE MOVIMENTO (OS MÚSCULOS)
+// Parte 3: AS FUNÇÕES DE MOVIMENTO 
 // ==========================================
 
 // Função para parar totalmente o robô (Freio)
@@ -107,4 +107,50 @@ void girar_direita(int velocidade) {
 
   ledcWrite(CANAL_PWM_ESQ, velocidade);
   ledcWrite(CANAL_PWM_DIR, velocidade);
+}
+// ==========================================
+// parte 4: A FUNÇÃO SETUP 
+// ==========================================
+
+void setup() {
+  // 1. Configurando os pinos de direção como SAÍDA de energia
+  pinMode(PINO_ESQ_FRENTE, OUTPUT);
+  pinMode(PINO_ESQ_TRAS, OUTPUT);
+  pinMode(PINO_DIR_FRENTE, OUTPUT);
+  pinMode(PINO_DIR_TRAS, OUTPUT);
+
+  // 2. Ligando o motor do PWM Esquerdo
+  // Primeiro, configuramos o canal com as nossas regras matemáticas
+  ledcSetup(CANAL_PWM_ESQ, FREQUENCIA_PWM, RESOLUCAO_PWM);
+  // Depois, "plugamos" esse canal no pino físico do ESP32
+  ledcAttachPin(PINO_VEL_ESQ, CANAL_PWM_ESQ);
+
+  // 3. Ligando o motor do PWM Direito
+  ledcSetup(CANAL_PWM_DIR, FREQUENCIA_PWM, RESOLUCAO_PWM);
+  ledcAttachPin(PINO_VEL_DIR, CANAL_PWM_DIR);
+
+  // 4. Medida de segurança: garante que o robô ligue totalmente parado
+  parar_motores();
+}
+// ==========================================
+// Parte  5: O CICLO PRINCIPAL 
+// ==========================================
+
+void loop() {
+
+  // 1. Acelera para frente com velocidade média (150) por 2 segundos
+  andar_frente(150);
+  delay(2000); // delay em C++ é medido em milissegundos (2000 = 2 segundos)
+
+  // 2. Freia e respira por 1 segundo
+  parar_motores();
+  delay(1000);
+
+  // 3. Gira no próprio eixo para a direita (velocidade 120) por 1 segundo
+  girar_direita(120);
+  delay(1000);
+
+  // 4. Freia por 2 segundos antes de recomeçar o ciclo
+  parar_motores();
+  delay(2000);
 }
