@@ -1,84 +1,58 @@
 #include <Arduino.h>
+#include <WiFi.h> // lib do wifi
 
-// ==========================================
-// parte 1: DECLARAÇÃO DOS PINOS (PONTE H)
-// ==========================================
+// --- Config rede ---
+const char* WiFi_SSID = "robo FP";
+const char* WiFi_PASS = "robo123456";
 
-// --- Motores do Lado Esquerdo ---
-// O pino 2 vai no ENA da Ponte H para controlar a velocidade da esquerda
+// Server na porta 80
+WiFiServer servidor(80);
+
+// --- Pinos Ponte H ---
+// Esquerda
 #define PINO_VEL_ESQ 2 
-// Os pinos 13 e 14 decidem se a roda esquerda gira para frente ou para trás
 #define PINO_ESQ_FRENTE 13    
 #define PINO_ESQ_TRAS 14      
 
-// --- Motores do Lado Direito ---
-// O pino 12 vai no ENB da Ponte H para controlar a velocidade da direita
+// Direita
 #define PINO_VEL_DIR 12
-// Os pinos 15 e 33 decidem se a roda direita gira para frente ou para trás
 #define PINO_DIR_FRENTE 15
 #define PINO_DIR_TRAS 33
 
-// ==========================================
-// parte 2: CONFIGURAÇÕES DE VELOCIDADE (PWM)
-// ==========================================
-
-// 1. Frequência do PWM (Velocidade do pulso)
-// 1000 Hz significa que a placa "pisca" a energia 1000 vezes por segundo.
-// Usamos esse valor padrão porque faz o motor rodar macio e sem fazer zumbido.
+// --- Config PWM ---
 #define FREQUENCIA_PWM 1000
-
-// 2. Resolução (O limite do acelerador)
-// Usando 8 bits, a nossa velocidade vai ser um número de 0 a 255.
-// Sendo 0 o robô totalmente parado, e 255 a velocidade máxima.
 #define RESOLUCAO_PWM 8
-
-// 3. Canais do ESP32
-// O ESP32 precisa de canais separados para enviar o sinal de velocidade.
-// Deixamos o canal 0 para a esquerda e o canal 1 para a direita.
 #define CANAL_PWM_ESQ 0
 #define CANAL_PWM_DIR 1
 
-// ==========================================
-// Parte 3: AS FUNÇÕES DE MOVIMENTO 
-// ==========================================
 
-// Função para parar totalmente o robô (Freio)
+// --- Funcoes de Movimento ---
 void parar_motores() {
-  // 1. Tira o pé do acelerador (Velocidade zero)
   ledcWrite(CANAL_PWM_ESQ, 0);
   ledcWrite(CANAL_PWM_DIR, 0);
 
-  // 2. Corta a energia da direção da roda esquerda (LOW = Desligado)
   digitalWrite(PINO_ESQ_FRENTE, LOW);
   digitalWrite(PINO_ESQ_TRAS, LOW);
 
-  // 3. Corta a energia da direção da roda direita (LOW = Desligado)
   digitalWrite(PINO_DIR_FRENTE, LOW);
   digitalWrite(PINO_DIR_TRAS, LOW);
 }
 
-// Função para o robô andar para frente com velocidade controlada e CALIBRADA
-// A "velocidade" deve ser um número entre 0 e 255
-void andar_frente(int velocidade) {
-  // 1. Configura as rodas esquerdas para girar para frente
+void andar_frente(int velocidad) {
   digitalWrite(PINO_ESQ_FRENTE, HIGH);
   digitalWrite(PINO_ESQ_TRAS, LOW);
 
-  // 2. Configura as rodas direitas para girar para frente
   digitalWrite(PINO_DIR_FRENTE, HIGH);
   digitalWrite(PINO_DIR_TRAS, LOW);
 
-  // 3. Calibração: reduzimos o motor esquerdo (aprox 15%) para compensar o desvio à direita
-  int velocidade_calibrada_esq = velocidade * 0.85; 
+  // calibracao: reduz motor esquerdo em ~15% pra corrigir desvio do chassi
+  int velocidade_calibrada_esq = velocidad * 0.85; 
 
-  // 4. Aplica a potência do motor (aciona o PWM)
   ledcWrite(CANAL_PWM_ESQ, velocidade_calibrada_esq);
-  ledcWrite(CANAL_PWM_DIR, velocidade);
+  ledcWrite(CANAL_PWM_DIR, velocidad);
 }
 
-// Função para o robô dar ré
 void andar_tras(int velocidade) {
-  // Inverte a polaridade: Pinos de trás ligados, pinos da frente desligados
   digitalWrite(PINO_ESQ_FRENTE, LOW);
   digitalWrite(PINO_ESQ_TRAS, HIGH);
   
@@ -89,9 +63,7 @@ void andar_tras(int velocidade) {
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
 
-// Função para virar à esquerda (Giro no próprio eixo)
 void girar_esquerda(int velocidade) {
-  // Roda esquerda vai para trás, roda direita vai para frente
   digitalWrite(PINO_ESQ_FRENTE, LOW);
   digitalWrite(PINO_ESQ_TRAS, HIGH);
   
@@ -102,9 +74,7 @@ void girar_esquerda(int velocidade) {
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
 
-// Função para virar à direita (Giro no próprio eixo)
 void girar_direita(int velocidade) {
-  // Roda esquerda vai para frente, roda direita vai para trás
   digitalWrite(PINO_ESQ_FRENTE, HIGH);
   digitalWrite(PINO_ESQ_TRAS, LOW);
   
@@ -115,50 +85,92 @@ void girar_direita(int velocidade) {
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
 
-// ==========================================
-// parte 4: A FUNÇÃO SETUP 
-// ==========================================
 
+// --- Setup ---
 void setup() {
-  // 1. Configurando os pinos de direção como SAÍDA de energia
+  // serial pra pegar o ip no monitor
+  Serial.begin(115200);
+
   pinMode(PINO_ESQ_FRENTE, OUTPUT);
   pinMode(PINO_ESQ_TRAS, OUTPUT);
   pinMode(PINO_DIR_FRENTE, OUTPUT);
   pinMode(PINO_DIR_TRAS, OUTPUT);
 
-  // 2. Ligando o motor do PWM Esquerdo
-  // Primeiro, configuramos o canal com as nossas regras matemáticas
   ledcSetup(CANAL_PWM_ESQ, FREQUENCIA_PWM, RESOLUCAO_PWM);
-  // Depois, "plugamos" esse canal no pino físico do ESP32
   ledcAttachPin(PINO_VEL_ESQ, CANAL_PWM_ESQ);
 
-  // 3. Ligando o motor do PWM Direito
   ledcSetup(CANAL_PWM_DIR, FREQUENCIA_PWM, RESOLUCAO_PWM);
   ledcAttachPin(PINO_VEL_DIR, CANAL_PWM_DIR);
 
-  // 4. Medida de segurança: garante que o robô ligue totalmente parado
   parar_motores();
+
+  // conecta wifi
+  Serial.print("Conectando em: ");
+  Serial.println(WiFi_SSID);
+  WiFi.begin(WiFi_SSID, WiFi_PASS);
+
+  // trava aqui ate conectar
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  // mostra ip pra equipe
+  Serial.println("\nConectado!");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+
+  servidor.begin();
 }
 
-// ==========================================
-// Parte  5: O CICLO PRINCIPAL 
-// ==========================================
 
+// --- Loop Principal ---
 void loop() {
+  // checa se tem cliente mandando requisicao
+  WiFiClient cliente = servidor.available();
 
-  // 1. Acelera para frente com velocidade média (150) por 2 segundos
-  andar_frente(150);
-  delay(2000); // delay em C++ é medido em milissegundos (2000 = 2 segundos)
+  if (cliente) {
+    String linha_requisicao = "";
 
-  // 2. Freia e respira por 1 segundo
-  parar_motores();
-  delay(1000);
+    while (cliente.connected()) {
+      if (cliente.available()) {
+        char c = cliente.read();
+        linha_requisicao += c;
 
-  // 3. Gira no próprio eixo para a direita (velocidade 120) por 1 segundo
-  girar_direita(120);
-  delay(1000);
+        // quebra de linha indica fim do request
+        if (c == '\n') {
+          if (linha_requisicao.length() == 1) {
+            // header http padrao pro python nao dar timeout
+            cliente.println("HTTP/1.1 200 OK");
+            cliente.println("Content-Type: text/plain");
+            cliente.println("Connection: close");
+            cliente.println();
+            cliente.println("OK");
+            break;
+          }
 
-  // 4. Freia por 2 segundos antes de recomeçar o ciclo
-  parar_motores();
-  delay(2000);
+          // rotas de controle (forca no maximo)
+          if (linha_requisicao.indexOf("GET /frente") >= 0) {
+            andar_frente(255);
+          } 
+          else if (linha_requisicao.indexOf("GET /tras") >= 0) {
+            andar_tras(255);
+          } 
+          else if (linha_requisicao.indexOf("GET /esquerda") >= 0) {
+            girar_esquerda(255);
+          } 
+          else if (linha_requisicao.indexOf("GET /direita") >= 0) {
+            girar_direita(255);
+          } 
+          else if (linha_requisicao.indexOf("GET /parar") >= 0) {
+            parar_motores();
+          }
+
+          linha_requisicao = "";
+        }
+      }
+    }
+    // derruba a conexao pra liberar o loop pro proximo comando
+    cliente.stop();
+  }
 }
