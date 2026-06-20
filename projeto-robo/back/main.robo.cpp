@@ -17,6 +17,7 @@
 // Os pinos 15 e 33 decidem se a roda direita gira para frente ou para trás
 #define PINO_DIR_FRENTE 15
 #define PINO_DIR_TRAS 33
+
 // ==========================================
 // parte 2: CONFIGURAÇÕES DE VELOCIDADE (PWM)
 // ==========================================
@@ -55,7 +56,8 @@ void parar_motores() {
   digitalWrite(PINO_DIR_FRENTE, LOW);
   digitalWrite(PINO_DIR_TRAS, LOW);
 }
-// Função para o robô andar para frente com velocidade controlada
+
+// Função para o robô andar para frente com velocidade controlada e CALIBRADA
 // A "velocidade" deve ser um número entre 0 e 255
 void andar_frente(int velocidade) {
   // 1. Configura as rodas esquerdas para girar para frente
@@ -66,10 +68,14 @@ void andar_frente(int velocidade) {
   digitalWrite(PINO_DIR_FRENTE, HIGH);
   digitalWrite(PINO_DIR_TRAS, LOW);
 
-  // 3. Aplica a potência do motor (aciona o PWM)
-  ledcWrite(CANAL_PWM_ESQ, velocidade);
+  // 3. Calibração: reduzimos o motor esquerdo (aprox 15%) para compensar o desvio à direita
+  int velocidade_calibrada_esq = velocidade * 0.85; 
+
+  // 4. Aplica a potência do motor (aciona o PWM)
+  ledcWrite(CANAL_PWM_ESQ, velocidade_calibrada_esq);
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
+
 // Função para o robô dar ré
 void andar_tras(int velocidade) {
   // Inverte a polaridade: Pinos de trás ligados, pinos da frente desligados
@@ -108,6 +114,7 @@ void girar_direita(int velocidade) {
   ledcWrite(CANAL_PWM_ESQ, velocidade);
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
+
 // ==========================================
 // parte 4: A FUNÇÃO SETUP 
 // ==========================================
@@ -132,6 +139,7 @@ void setup() {
   // 4. Medida de segurança: garante que o robô ligue totalmente parado
   parar_motores();
 }
+
 // ==========================================
 // Parte  5: O CICLO PRINCIPAL 
 // ==========================================
