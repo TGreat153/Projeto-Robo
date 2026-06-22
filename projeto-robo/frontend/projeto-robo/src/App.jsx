@@ -5,6 +5,8 @@ import Auto from './components/auto/auto';
 import About from './components/about/About';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import "./App.css"
+
+
 function App() {
   return (
     <BrowserRouter>
