@@ -1,3 +1,6 @@
+import cv2 as cv
+import numpy as np
+
 True:
         # Ver vídeo
         if str(comando).strip().lower() == "exit":
