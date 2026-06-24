@@ -6,7 +6,7 @@ function Auto() {
   const [message, setmessage] = useState("")
   const send_target = async(target) => {
     try {
-      const response = await fetch("http://localhost:8080/api/robo/auto",{
+      const response = await fetch("http://localhost:8080/api/robo/auto/start",{
       method:"POST",
       headers:{
         'Content-Type': 'application/json',
@@ -15,22 +15,44 @@ function Auto() {
         'target': target
       })
     });
-    const dados = await response.json()
-    setmessage(dados.message)
-    alert(dados.message)
+    const data = await response.json()
+    setmessage(data.message)
+    alert(data.message)
     setColor('void')
     } catch (erro) {
       console.error("Erro ao conectar com o backend:", erro);
       setmessage("Erro ao conectar com o servidor.");
-      alert(dados.message)
+      alert(data.message)
     }
     finally {
       setColor('void')
     }
   }
-  const choice_target = (target) => {
-    setColor(target)
-    send_target(target)
+
+
+   const stop_robot = async(target) => {
+    try {
+      const response = await fetch("http://localhost:8080/api/robo/auto/stop",{
+      method:"POST",
+      headers:{
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'target': target
+      })
+    });
+    const data = await response.json()
+    setmessage(data.message)
+    alert(data.message)
+    setColor('void')
+    } catch (erro) {
+      console.error("Erro ao conectar com o backend:", erro);
+      setmessage("Erro ao conectar com o servidor.");
+      alert(data.message)
+    }
+    finally {
+      setColor('void')
+    }
   }
 
   return (
@@ -41,8 +63,8 @@ function Auto() {
             <button type="button" onClick={() => setColor('blue')} className="btn btn-primary">Azul</button>
             <button type="button" onClick={() => setColor('green')} className="btn btn-success">Verde</button>
         </div>
-        <button type="button" onClick={() => choice_target(color)} className="btn btn-dark btn-lg" >Iniciar</button>
-        <button type="button" onClick={() => choice_target('stop')} className="btn btn-dark btn-lg">Parar</button>
+        <button type="button" onClick={() => send_target(color)} className="btn btn-dark btn-lg" >Iniciar</button>
+        <button type="button" onClick={() => stop_robot('stop')} className="btn btn-dark btn-lg">Parar</button>
     </div>
   )
 }

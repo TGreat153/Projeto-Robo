@@ -65,12 +65,11 @@ function Manual() {
               <button ref={(el) => (botoesRef.current['right'] = el)} type="button" onClick={() => press_button("right")} className="btn btn-dark">→</button>
             </div>
             <button type="button" className="btn btn-dark" onClick={() => press_button("backward")} ref={(el) => (botoesRef.current['down']) = el}>↓</button>
-            <div>
-              <button type="button" onClick={() => press_button("stop")} className="btn btn-dark">Parar</button>
-              <button type="button" onClick={() => handleEnviar()} className="btn btn-dark">Iniciar</button>
-            </div>
         </div>
-
+        <div className="buttons">
+          <button type="button" onClick={() => press_button("stop")} className="btn btn-dark">Parar</button>
+          <button type="button" onClick={() => handleEnviar()} className="btn btn-dark">Iniciar</button>
+        </div>
     </div>
   )
 }
