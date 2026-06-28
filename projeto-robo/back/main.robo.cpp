@@ -2,26 +2,39 @@
 #include <WiFi.h>
 #include "esp_camera.h"
 #include "esp_http_server.h"
+#include "soc/soc.h"             // Pra mexer nas configs da placa
+#include "soc/rtc_cntl_reg.h"    // Pra conseguir desligar o aviso de energia fraca
 
-// --- Config rede ---
-const char* ssid = "NOME_DA_REDE_AQUI";
-const char* password = "SENHA_AQUI";
+// ---------------------------------------------------------
+// Configuração do Wi-Fi do Robô
+// A gente mudou pro robô criar o próprio Wi-Fi (Modo AP)
+// O IP fixo pra gente conectar no Python vai ser sempre 192.168.4.1
+// ---------------------------------------------------------
+const char* ssid = "Robo_Joao";
+const char* password = "123465789"; 
 
-// --- Pinos Ponte H ---
-#define PINO_VEL_ESQ 2 
-#define PINO_ESQ_FRENTE 13    
-#define PINO_ESQ_TRAS 14      
-#define PINO_VEL_DIR 12
-#define PINO_DIR_FRENTE 15
-#define PINO_DIR_TRAS 33
+// ---------------------------------------------------------
+// Pinos da Ponte H (Ligados nos motores)
+// ---------------------------------------------------------
+#define PINO_VEL_ESQ 2        // Pino PWM pra controlar a velocidade da roda esquerda
+#define PINO_ESQ_FRENTE 13    // Gira esquerda pra frente
+#define PINO_ESQ_TRAS 14      // Gira esquerda pra trás
 
-// --- Config PWM ---
-#define FREQUENCIA_PWM 1000
-#define RESOLUCAO_PWM 8
+#define PINO_VEL_DIR 12       // Pino PWM pra controlar a velocidade da roda direita
+#define PINO_DIR_FRENTE 15    // Gira direita pra frente
+#define PINO_DIR_TRAS 33      // Gira direita pra trás
+
+// ---------------------------------------------------------
+// Config do PWM (Pra velocidade não ficar só no máximo/mínimo)
+// ---------------------------------------------------------
+#define FREQUENCIA_PWM 1000   
+#define RESOLUCAO_PWM 8       // Velocidade vai de 0 até 255
 #define CANAL_PWM_ESQ 0
 #define CANAL_PWM_DIR 1
 
-// --- Pinos Camera 
+// ---------------------------------------------------------
+// Pinos da Câmera (Padrão do ESP32-CAM)
+// ---------------------------------------------------------
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -39,17 +52,16 @@ const char* password = "SENHA_AQUI";
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-httpd_handle_t servidor = NULL;
+httpd_handle_t servidor = NULL; 
 
-
-
-// FUNCOES DE MOVIMENTO (CALIBRADAS)
-/
+// ---------------------------------------------------------
+// FUNÇÕES DE MOVIMENTO
+// ---------------------------------------------------------
 
 void parar_motores() {
-  ledcWrite(CANAL_PWM_ESQ, 0);
+  ledcWrite(CANAL_PWM_ESQ, 0); // Velocidade zero
   ledcWrite(CANAL_PWM_DIR, 0);
-  digitalWrite(PINO_ESQ_FRENTE, LOW);
+  digitalWrite(PINO_ESQ_FRENTE, LOW); 
   digitalWrite(PINO_ESQ_TRAS, LOW);
   digitalWrite(PINO_DIR_FRENTE, LOW);
   digitalWrite(PINO_DIR_TRAS, LOW);
@@ -60,6 +72,9 @@ void andar_frente(int velocidad) {
   digitalWrite(PINO_ESQ_TRAS, LOW);
   digitalWrite(PINO_DIR_FRENTE, HIGH);
   digitalWrite(PINO_DIR_TRAS, LOW);
+  
+  // O motor esquerdo tava mais rápido e o robô entortava
+  // Então multipliquei por 0.85 pra calibrar e ele andar reto
   int velocidade_calibrada_esq = velocidad * 0.85; 
   ledcWrite(CANAL_PWM_ESQ, velocidade_calibrada_esq);
   ledcWrite(CANAL_PWM_DIR, velocidad);
@@ -75,6 +90,7 @@ void andar_tras(int velocidade) {
 }
 
 void girar_esquerda(int velocidade) {
+  // Gira uma roda pra frente e outra pra trás pro robô girar no próprio eixo
   digitalWrite(PINO_ESQ_FRENTE, LOW);
   digitalWrite(PINO_ESQ_TRAS, HIGH);
   digitalWrite(PINO_DIR_FRENTE, HIGH);
@@ -92,30 +108,32 @@ void girar_direita(int velocidade) {
   ledcWrite(CANAL_PWM_DIR, velocidade);
 }
 
+// ---------------------------------------------------------
+// COMANDOS RECEBIDOS PELO SITE/PYTHON
+// ---------------------------------------------------------
 
-// ROTEAMENTO HTTP (MOTORES E VIDEO)
-
-// Intercepta os comandos de movimento
 esp_err_t controle_handler(httpd_req_t *req) {
   char* rota = (char*)req->uri;
   
+  // Lê qual link foi acessado (ex: /frente) e chama a função certa
   if (strstr(rota, "/frente")) andar_frente(255);
   else if (strstr(rota, "/tras")) andar_tras(255);
   else if (strstr(rota, "/esquerda")) girar_esquerda(255);
   else if (strstr(rota, "/direita")) girar_direita(255);
   else if (strstr(rota, "/parar")) parar_motores();
   
-  // Resposta padrao para o Python nao travar
+  // Responde "OK" pro navegador não ficar carregando infinitamente
   httpd_resp_set_type(req, "text/plain");
   return httpd_resp_send(req, "OK", 2);
 }
 
-// Protocolo MJPEG padrao para o OpenCV conseguir puxar o video
+// Códigos obrigatórios pro formato de vídeo MJPEG
 #define PART_BOUNDARY "123456789000000000000987654321"
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
 static const char* _STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
 
+// Puxa as imagens da câmera e joga na rede (Streaming)
 esp_err_t video_handler(httpd_req_t *req) {
   camera_fb_t * fb = NULL;
   esp_err_t res = ESP_OK;
@@ -129,12 +147,14 @@ esp_err_t video_handler(httpd_req_t *req) {
   while(true){
     fb = esp_camera_fb_get();
     if (!fb) {
-      Serial.println("Falha na captura da camera");
+      Serial.println("Erro ao puxar a imagem");
       res = ESP_FAIL;
     } else {
       _jpg_buf_len = fb->len;
       _jpg_buf = fb->buf;
     }
+    
+    // Manda os dados da foto pro navegador
     if(res == ESP_OK){
       size_t hlen = snprintf((char *)part_buf, 64, _STREAM_PART, _jpg_buf_len);
       res = httpd_resp_send_chunk(req, (const char *)part_buf, hlen);
@@ -145,6 +165,8 @@ esp_err_t video_handler(httpd_req_t *req) {
     if(res == ESP_OK){
       res = httpd_resp_send_chunk(req, _STREAM_BOUNDARY, strlen(_STREAM_BOUNDARY));
     }
+    
+    // Limpa a memória da placa pra não travar depois de alguns minutos
     if(fb){
       esp_camera_fb_return(fb);
       fb = NULL;
@@ -158,26 +180,30 @@ esp_err_t video_handler(httpd_req_t *req) {
   return res;
 }
 
-//
-// SETUP
-//
-
+// ---------------------------------------------------------
+// INICIALIZAÇÃO
+// ---------------------------------------------------------
 void setup() {
+  // A placa tava reiniciando sozinha quando o Wi-Fi ligava (pico de energia)
+  // Esse comando desliga o aviso de Brownout pra forçar ela a ligar mesmo assim
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); 
+  
   Serial.begin(115200);
 
-  // 1. Setup Pinos Motor
+  // 1. Config dos motores
   pinMode(PINO_ESQ_FRENTE, OUTPUT);
   pinMode(PINO_ESQ_TRAS, OUTPUT);
   pinMode(PINO_DIR_FRENTE, OUTPUT);
   pinMode(PINO_DIR_TRAS, OUTPUT);
 
+  // Liga os pinos no PWM do ESP32
   ledcSetup(CANAL_PWM_ESQ, FREQUENCIA_PWM, RESOLUCAO_PWM);
   ledcAttachPin(PINO_VEL_ESQ, CANAL_PWM_ESQ);
   ledcSetup(CANAL_PWM_DIR, FREQUENCIA_PWM, RESOLUCAO_PWM);
   ledcAttachPin(PINO_VEL_DIR, CANAL_PWM_DIR);
   parar_motores();
 
-  // 2. Setup Camera
+  // 2. Config da Câmera
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_2;
   config.ledc_timer = LEDC_TIMER_1;
@@ -200,36 +226,39 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
   
-  // QVGA = 320x240 (Leve, nao trava)
+  // Resolução 320x240 (QVGA) pra imagem ficar leve e o vídeo não travar
   config.frame_size = FRAMESIZE_QVGA; 
   config.jpeg_quality = 12;
   config.fb_count = 1;
 
   if(esp_camera_init(&config) != ESP_OK){
-    Serial.println("Erro critico: Hardware da camera falhou.");
-    return;
+    Serial.println("Aviso: Falha na câmera.");
+    // Eu comentei o 'return;' aqui porque quando dava erro na câmera 
+    // ele parava o código inteiro e nem criava o Wi-Fi pra gente testar.
   }
 
-  // espelha a imagem caso o OpenCV receba invertido
   sensor_t * s = esp_camera_sensor_get();
-  s->set_vflip(s, 0);   
-  s->set_hmirror(s, 0); 
-
-  // 3. Setup Rede
-  WiFi.begin(ssid, password);
-  Serial.print("Conectando Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Se a câmera ligou certinho, ajusta pra imagem não ficar invertida
+  if (s != NULL) { 
+    s->set_vflip(s, 0);   
+    s->set_hmirror(s, 0); 
   }
-  Serial.println("");
-  Serial.print("IP da Camera e Comandos: ");
-  Serial.println(WiFi.localIP());
 
-  // 4. Inicia o Servidor HTTP Assincrono
+  // 3. Ligando a Rede Wi-Fi
+  Serial.println("\nCriando o Wi-Fi do robô...");
+  WiFi.softAP(ssid, password); 
+  
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("Wi-Fi pronto! Conecte na rede: ");
+  Serial.println(ssid);
+  Serial.print("IP Fixo pra colocar no site/Python: ");
+  Serial.println(IP);
+
+  // 4. Configurando os links do servidor web (Porta 80)
   httpd_config_t config_server = HTTPD_DEFAULT_CONFIG();
   config_server.server_port = 80;
 
+  // Associa cada link a uma função do robô
   httpd_uri_t url_video = { .uri = "/stream", .method = HTTP_GET, .handler = video_handler, .user_ctx = NULL };
   httpd_uri_t url_frente = { .uri = "/frente", .method = HTTP_GET, .handler = controle_handler, .user_ctx = NULL };
   httpd_uri_t url_tras = { .uri = "/tras", .method = HTTP_GET, .handler = controle_handler, .user_ctx = NULL };
@@ -248,6 +277,6 @@ void setup() {
 }
 
 void loop() {
-  // Loop vazio. O FreeRTOS processa a camera e a rede nativamente em background.
+  // Fica parado aqui. A câmera e a rede funcionam sozinhas em segundo plano.
   delay(10000); 
 }
