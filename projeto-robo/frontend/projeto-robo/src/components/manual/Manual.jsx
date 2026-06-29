@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react"
 function Manual() {
 
   const [action, setAction] = useState("void");
-  const [message, setmessage]= useState("")
+  const [message, setmessage]= useState("");
   const botoesRef = useRef({});
   const handleEnviar = async (command) => {
 
@@ -66,7 +66,6 @@ function Manual() {
         </div>
         <div className="buttons">
           <button type="button" onClick={() => press_button("stop")} className="btn btn-dark">Parar</button>
-          <button type="button" onClick={() => handleEnviar()} className="btn btn-dark">Iniciar</button>
         </div>
     </div>
   )
