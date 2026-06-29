@@ -20,8 +20,6 @@ function Manual() {
       })
     });
     const dados = await response.json()
-    setmessage(dados.message)
-    alert(dados.message)
     } catch (erro) {
       console.error("Erro ao conectar com o backend:", erro);
       setmessage("Erro ao conectar com o servidor.");
