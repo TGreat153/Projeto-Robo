@@ -116,10 +116,10 @@ esp_err_t controle_handler(httpd_req_t *req) {
   char* rota = (char*)req->uri;
   
   // Lê qual link foi acessado (ex: /frente) e chama a função certa
-  if (strstr(rota, "/frente")) andar_frente(255);
-  else if (strstr(rota, "/tras")) andar_tras(255);
-  else if (strstr(rota, "/esquerda")) girar_esquerda(255);
-  else if (strstr(rota, "/direita")) girar_direita(255);
+  if (strstr(rota, "/frente")) andar_frente(140);
+  else if (strstr(rota, "/tras")) andar_tras(140);
+  else if (strstr(rota, "/esquerda")) girar_esquerda(130);
+  else if (strstr(rota, "/direita")) girar_direita(130);
   else if (strstr(rota, "/parar")) parar_motores();
   
   // Responde "OK" pro navegador não ficar carregando infinitamente

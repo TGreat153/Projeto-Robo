@@ -16,11 +16,8 @@ function Auto() {
       })
     });
     const data = await response.json()
-    setmessage(data.message)
-    alert(data.message)
     setColor('void')
     } catch (erro) {
-      console.error("Erro ao conectar com o backend:", erro);
       setmessage("Erro ao conectar com o servidor.");
       alert(data.message)
     }
@@ -42,13 +39,10 @@ function Auto() {
       })
     });
     const data = await response.json()
-    setmessage(data.message)
-    alert(data.message)
     setColor('void')
     } catch (erro) {
       console.error("Erro ao conectar com o backend:", erro);
       setmessage("Erro ao conectar com o servidor.");
-      alert(data.message)
     }
     finally {
       setColor('void')
