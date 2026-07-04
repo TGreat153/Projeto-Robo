@@ -7,7 +7,7 @@ def manual(dados):
     url = f"http://{ESP32_IP}"
 
     # Pegar comando
-    action = dados.get['command']
+    action = dados['command']
 
     #Dar comandos
     if action == "straight":
