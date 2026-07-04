@@ -3,7 +3,7 @@ import requests
 
 def manual(dados):
     # Pegar url
-    ESP32_IP = "xxxxxxx"
+    ESP32_IP = "192.168.4.1"
     url = f"http://{ESP32_IP}"
 
     # Pegar comando
