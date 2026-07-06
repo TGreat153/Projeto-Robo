@@ -33,7 +33,7 @@ const char* password = "123465789";
 #define CANAL_PWM_DIR 1
 
 // ---------------------------------------------------------
-// Pinos da Câmera (Padrão do ESP32-CAM)
+// Pinos da Câmera
 // ---------------------------------------------------------
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1

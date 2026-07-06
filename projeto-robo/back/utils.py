@@ -1,6 +1,7 @@
 import cv2 as cv
 import requests
 
+#Controlar manualmente
 def manual(dados):
     # Pegar url
     ESP32_IP = "192.168.4.1"
@@ -27,7 +28,8 @@ def manual(dados):
         command = "/parar"
         mover(url, command)
 
-def auto(dados, pre_url, thread_stop):
+#Buscar automaticamente
+def auto(dados, thread_stop):
     # Pegar url
     ESP32_IP = "192.168.4.1"
     pre_url = f"http://{ESP32_IP}"
@@ -37,8 +39,8 @@ def auto(dados, pre_url, thread_stop):
     action = dados['target']
     tolerancia = 20
     if action != 'void':
+        camera = cv.VideoCapture(url)
         while not thread_stop.is_set():
-            camera = cv.VideoCapture(url)
             if camera.isOpened():
                 valite, frame = camera.read()
                 height, width, channels = frame.shape
@@ -49,6 +51,7 @@ def auto(dados, pre_url, thread_stop):
     else:
         print('finalizado')
 
+#Buscar a cor correta
 def mover(url, command):
         url_final = f"{url}{command}"
         try:
@@ -57,6 +60,7 @@ def mover(url, command):
             value = "Erro ao conectar a camera!"
             return value
 
+#Criar máscara de cor
 def search_color(color, frame):
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
     if color =='red':
@@ -71,6 +75,7 @@ def search_color(color, frame):
         mask_green = cv.inRange(hsv, (40, 50, 50), (80, 255, 255))
         return mask_green
 
+#Buscar balão
 def identif_ballon(mask, width_center, height_center, tolerancia, frame):
         contours, hierarchy = cv.findContours(mask, cv.RETR_CCOMP, cv.CHAIN_APPROX_NONE)
         if contours != ():
@@ -80,12 +85,12 @@ def identif_ballon(mask, width_center, height_center, tolerancia, frame):
 
             position_x = b_x - width_center
             ip = "192.168.4.1"
-            if position_x <= tolerancia:      
+            if abs(position_x) <= tolerancia:      
                     pre_url = f"http://{ip}"
                     command = command = "/frente"
                     mover(pre_url, command)
             else:
-                if position_x > tolerancia:
+                if abs(position_x) > tolerancia:
                     pre_url = f"http://{ip}"
                     command = command = "/direita"
                     mover(pre_url, command)
@@ -93,7 +98,7 @@ def identif_ballon(mask, width_center, height_center, tolerancia, frame):
                     mover(pre_url, command)
                     command = command = "/esquerda"
                     mover(pre_url, command)
-                elif position_x < -tolerancia:
+                elif abs(position_x) < -tolerancia:
                     pre_url = f"http://{ip}"
                     command = command = "/esquerda"
                     mover(pre_url, command)

@@ -7,6 +7,7 @@ function About() {
         <p>Matheus Gonçaves</p>
         <p>Nirlon Alexandre</p>
         <p>Tarcio José</p>
+        <p>Vínicius Calado</p>
         <h1>Objetivo</h1>
         <p>Este é um trabalho da universidade de Pernambuco Campus Benfica. Do curso de engenharia da Computação. Seu objetivo treinar habilidades do robô!</p>
     </div>

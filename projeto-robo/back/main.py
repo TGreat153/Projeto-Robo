@@ -9,6 +9,7 @@ cors = CORS(app, resources={r'/api/*': {"origins": "http://localhost:5173"}})
 thread = None
 thread_stop = threading.Event()
 
+#Código manual
 @app.route("/api/robo/manual", methods=["POST"])
 def receber_data_manual():
     data = request.get_json()
@@ -19,7 +20,7 @@ def receber_data_manual():
         'result': value
     })
 
-
+#Código automatico(Iniciar)
 @app.route("/api/robo/auto/start", methods=["POST"])
 def receber_data_auto():
     global thread
@@ -40,7 +41,7 @@ def receber_data_auto():
         'message': 'Modo automático iniciado com sucesso!',
     })
 
-
+#Código automatico(Parar)
 @app.route("/api/robo/auto/stop", methods=["POST"])
 def stop_loop():
     global thread
