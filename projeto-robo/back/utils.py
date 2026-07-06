@@ -14,15 +14,23 @@ def manual(dados):
     if action == "straight":
         command = "/frente"
         mover(url, command)
+        command = "/parar"
+        mover(url, command)
     elif action == "left":
         command = "/esquerda"
+        mover(url, command)
+        command = "/parar"
         mover(url, command)
     elif action == "right":
         command = "/direita"
         mover(url, command)
+        command = "/parar"
+        mover(url, command)
 
     elif action == "backward":
         command = "/tras"
+        mover(url, command)
+        command = "/parar"
         mover(url, command)
     elif action == "stop":
         command = "/parar"
@@ -43,11 +51,14 @@ def auto(dados, thread_stop):
         while not thread_stop.is_set():
             if camera.isOpened():
                 valite, frame = camera.read()
-                height, width, channels = frame.shape
-                height_center = int(height / 2)
-                width_center = int(width / 2)
-                mask = search_color(dados, frame)
-                identif_ballon(mask, width_center, height_center, tolerancia, frame)
+                if valite:
+                     frame.imgshow()
+                #valite, frame = camera.read()
+                #height, width, channels = frame.shape
+                #height_center = int(height / 2)
+                #width_center = int(width / 2)
+                #mask = search_color(dados, frame)
+                #identif_ballon(mask, width_center, height_center, tolerancia, frame)
     else:
         print('finalizado')
 

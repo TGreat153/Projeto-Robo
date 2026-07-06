@@ -16,6 +16,7 @@ function Auto() {
       })
     });
     const data = await response.json()
+    
     setColor('void')
     } catch (erro) {
       setmessage("Erro ao conectar com o servidor.");
