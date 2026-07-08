@@ -4,7 +4,7 @@ function About() {
         <h1>Equipe</h1>
         <p>Alunos:</p>
         <p>João Lucas</p>
-        <p>Matheus Gonçaves</p>
+        <p>Matheus Gonçalves</p>
         <p>Nirlon Alexandre</p>
         <p>Tarcio José</p>
         <p>Vínicius Calado</p>

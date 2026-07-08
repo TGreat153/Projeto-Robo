@@ -25,6 +25,14 @@ def receber_data_manual():
 def receber_data_auto():
     global thread
     data = request.get_json()
+
+    if not data:
+        return jsonify({
+            'message': 'Erro!',
+            'result': 'JSON inválido ou ausente."'
+        }), 400
+
+
     
     if thread and thread.is_alive():
         return jsonify({
@@ -44,14 +52,11 @@ def receber_data_auto():
 #Código automatico(Parar)
 @app.route("/api/robo/auto/stop", methods=["POST"])
 def stop_loop():
-    global thread
-    
+    global thread    
     thread_stop.set()
-
     return jsonify({
         'message': 'Comando de parada enviado!',
     })
 
-
 if __name__ == "__main__":
-    app.run(debug=True, port=8080)
+    app.run(host="0.0.0.0", port=8080)
